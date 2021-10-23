@@ -10,6 +10,7 @@ import requests
 import time
 from multiprocessing import Pool
 import os
+import glob
  
 def createFolder(directory):
     try:
@@ -27,6 +28,21 @@ def split_csv(total_csv):
         file_count = file_count+1 
     return file_count
 
+def merge_csv():
+  input_file = r'./result/'
+  output_file = r'./result/result2.csv'
+
+  allFile_list = glob.glob(os.path.join(input_file, 'fout*')) # glob함수로 sales_로 시작하는 파일들을 모은다
+  allFile_list.sort()
+  print(allFile_list)
+
+  all_Data = []
+  for file in allFile_list:
+    records = pd.read_csv(file).to_dict('records') 
+    all_Data.extend(records)
+
+  DataFrame(all_Data).to_csv(output_file,encoding='utf-8-sig',index=False)
+  
 def get_creatorAddress(data):
     if(str(data['token00_creator_address']) != 'nan'):
         return data
@@ -37,7 +53,7 @@ def get_creatorAddress(data):
     
     try:
         creator_address = repos['contractInfo']['creatorAddress']
-        print('find by ethplorer :' + token_id)
+        print('find by ethplorer : ' + token_id)
     except:     #오류가 나면 이더스캔에서 크롤링
          url = 'https://etherscan.io/address/'+token_id
          try:
@@ -46,7 +62,8 @@ def get_creatorAddress(data):
              page_soup = BeautifulSoup(response.text, "html.parser")
              Transfers_info_table_1 = str(page_soup.find("a", {"class": "hash-tag text-truncate"}))
              creator_address = re.sub('<.+?>', '', Transfers_info_table_1, 0).strip()
-             print('find by etherscan :' + token_id)
+             print('find by etherscan : ' + token_id)
+             print('result : ' + creator_address)
          except Exception as e:  #이더스캔 크롤링까지 에러나면 'Error'로 표시
               print(e)
               timeout_count = 0
@@ -77,7 +94,7 @@ if __name__=='__main__':
         datas = pd.read_csv(file_name).to_dict('records')
         datas_len = len(datas)
         try:
-            p = Pool(8)
+            p = Pool(4)
             count = 0
             result = []
             for ret in p.imap(get_creatorAddress,datas):
@@ -89,12 +106,12 @@ if __name__=='__main__':
             p.join()
         except Exception as e:
             print(e)
-        print(result)
         print('=======')
         time.sleep(5)
             
         df = pd.DataFrame(result)
         file_name = './result/fout{}.csv'.format(i)
         df.to_csv(file_name,encoding='utf-8-sig',index=False)
-    
+        print(file_name + ' complete')
+    merge_csv()
     
