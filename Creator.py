@@ -67,7 +67,7 @@ def get_creatorAddress(data):
 
 if __name__=='__main__':
     createFolder('./result')
-    file_name = 'Colab_Pairs_v1.4.csv'
+    file_name = 'Creator_Pairs_v1.4.csv'
     file_count = split_csv(file_name)
     out_list = []
     out_list = list(input('입력(공백단위) : ').split())
